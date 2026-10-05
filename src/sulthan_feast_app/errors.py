@@ -13,6 +13,15 @@ def daftarkan_penangan_error(app: FastAPI) -> None:
         if exc.sqlstate == "45000":
             return JSONResponse(status_code=400, content={"detail": exc.msg})
 
+        # 1452 = FK gagal saat INSERT/UPDATE (mis. id_ruangan tidak ada).
+        if exc.errno == 1452:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "detail": "Data yang dirujuk tidak ditemukan (misal id_ruangan tidak ada)"
+                },
+            )
+
         # Pemetaan khusus (mis. 23000 untuk FK) ditambahkan nanti saat dibutuhkan.
         return JSONResponse(
             status_code=500,
