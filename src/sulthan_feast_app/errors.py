@@ -18,7 +18,7 @@ def daftarkan_penangan_error(app: FastAPI) -> None:
             return JSONResponse(
                 status_code=400,
                 content={
-                    "detail": "Data yang dirujuk tidak ditemukan (misal id_ruangan tidak ada)"
+                    "detail": "Data yang dirujuk tidak ditemukan (misal id_kategori_menu atau id_ruangan tidak ada)"
                 },
             )
 
