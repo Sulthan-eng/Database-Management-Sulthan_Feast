@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from .db import tutup_semua_pool
 from .errors import daftarkan_penangan_error
-from .routers import publik
+from .routers import admin, publik
 
 
 @asynccontextmanager
@@ -20,3 +20,4 @@ app = FastAPI(title="Sulthan Feast API", lifespan=lifespan)
 
 daftarkan_penangan_error(app)
 app.include_router(publik.router)
+app.include_router(admin.router)
