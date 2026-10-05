@@ -1,14 +1,12 @@
-"""Titik masuk aplikasi FastAPI "Sulthan Feast".
-
-Tahap 1: hanya GET /menu untuk membuktikan alur
-FastAPI -> db.py -> procedure -> MySQL berjalan.
-"""
+"""Titik masuk aplikasi FastAPI "Sulthan Feast"."""
 
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .db import call_read, tutup_semua_pool
+from .db import tutup_semua_pool
+from .errors import daftarkan_penangan_error
+from .routers import publik
 
 
 @asynccontextmanager
@@ -20,7 +18,5 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Sulthan Feast API", lifespan=lifespan)
 
 
-@app.get("/menu")
-def lihat_menu():
-    """Daftar menu untuk customer (tanpa HPP dan margin), hanya harga jual."""
-    return call_read("customer", "sp_lihat_menu_customer")
+daftarkan_penangan_error(app)
+app.include_router(publik.router)
