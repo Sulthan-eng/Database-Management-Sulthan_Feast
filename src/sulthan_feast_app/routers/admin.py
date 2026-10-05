@@ -129,3 +129,46 @@ def ubah_menu(id_menu: int, data: MenuInput):
 def hapus_menu(id_menu: int):
     call_write("admin", "sp_hapus_menu", [id_menu])
     return {"pesan": "Menu berhasil dihapus"}
+
+ 
+# ----------------------------------------------------------------- Ruangan
+ 
+class RuanganInput(BaseModel):
+    """Isi permintaan tambah/ubah ruangan. Validasi nama ada di procedure."""
+ 
+    ruangan: str = Field(examples=["VIP Room"])
+    deskripsi: str | None = Field(
+        default=None, examples=["Ruangan untuk menghabiskan waktu bersama keluarga."]
+    )
+ 
+ 
+@router.get("/admin/ruangan", dependencies=[Depends(admin_saat_ini)])
+def lihat_ruangan_admin():
+    """Daftar ruangan (admin)."""
+    return call_read("admin", "sp_lihat_ruangan")
+ 
+ 
+@router.post(
+    "/admin/ruangan",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(admin_saat_ini)],
+)
+def tambah_ruangan(data: RuanganInput):
+    call_write("admin", "sp_tambah_ruangan", [data.ruangan, data.deskripsi])
+    return {"pesan": "Ruangan berhasil ditambahkan"}
+ 
+ 
+@router.put("/admin/ruangan/{id_ruangan}", dependencies=[Depends(admin_saat_ini)])
+def ubah_ruangan(id_ruangan: int, data: RuanganInput):
+    call_write(
+        "admin", "sp_ubah_ruangan", [id_ruangan, data.ruangan, data.deskripsi]
+    )
+    return {"pesan": "Ruangan berhasil diubah"}
+ 
+ 
+@router.delete("/admin/ruangan/{id_ruangan}", dependencies=[Depends(admin_saat_ini)])
+def hapus_ruangan(id_ruangan: int):
+    """Hapus ruangan. PERHATIAN: trigger ikut menghapus SEMUA reservasi
+    di ruangan ini (riwayat log reservasi tetap tersimpan)."""
+    call_write("admin", "sp_hapus_ruangan", [id_ruangan])
+    return {"pesan": "Ruangan berhasil dihapus"}
