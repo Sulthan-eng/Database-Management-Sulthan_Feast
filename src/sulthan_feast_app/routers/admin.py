@@ -4,7 +4,7 @@
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from ..db import call_read, call_write
 from ..security import admin_saat_ini, buat_token, verify_password
@@ -84,3 +84,48 @@ def hapus_kategori(id_kategori: int, hapus_menu: bool = False):
     untuk ikut menghapus menu-menu di dalamnya (default: ditolak)."""
     call_write("admin", "sp_hapus_kategori_menu", [id_kategori, hapus_menu])
     return {"pesan": "Kategori berhasil dihapus"}
+
+
+# -------------------------------------------------------------------- Menu
+
+class MenuInput(BaseModel):
+    """Isi permintaan tambah/ubah menu. Aturan nama dan harga divalidasi di procedure."""
+
+    nama: str = Field(examples=["Kebab"])
+    id_kategori: int = Field(examples=[1])
+    deskripsi: str | None = Field(default=None, examples=["Daging sapi berbumbu khas Timur Tengah"])
+    harga_pokok_penjualan: float = Field(examples=[20000])
+    harga_jual: float = Field(examples=[35000])
+
+
+def _argumen_menu(data: MenuInput) -> list:
+    # Urutan sama dengan parameter sp_tambah_menu / sp_ubah_menu (setelah id_menu).
+    return [
+        data.nama,
+        data.id_kategori,
+        data.deskripsi,
+        data.harga_pokok_penjualan,
+        data.harga_jual,
+    ]
+
+
+@router.post(
+    "/admin/menu",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(admin_saat_ini)],
+)
+def tambah_menu(data: MenuInput):
+    call_write("admin", "sp_tambah_menu", _argumen_menu(data))
+    return {"pesan": "Menu berhasil ditambahkan"}
+
+
+@router.put("/admin/menu/{id_menu}", dependencies=[Depends(admin_saat_ini)])
+def ubah_menu(id_menu: int, data: MenuInput):
+    call_write("admin", "sp_ubah_menu", [id_menu, *_argumen_menu(data)])
+    return {"pesan": "Menu berhasil diubah"}
+
+
+@router.delete("/admin/menu/{id_menu}", dependencies=[Depends(admin_saat_ini)])
+def hapus_menu(id_menu: int):
+    call_write("admin", "sp_hapus_menu", [id_menu])
+    return {"pesan": "Menu berhasil dihapus"}
