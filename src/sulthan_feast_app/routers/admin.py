@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 
 from ..db import call_read, call_write
-from ..security import admin_saat_ini, buat_token, verify_password
+from ..security import admin_saat_ini, buat_token, hash_password, verify_password
 
 router = APIRouter(tags=["Admin"])
 
@@ -237,3 +237,43 @@ def ubah_nama_customer(id_customer: int, data: NamaCustomerInput):
 
 
 # --------------------------------------------------------------- User
+class UserBaru(BaseModel):
+    """Akun admin baru. Password di-hash di sini; database hanya menerima hash."""
+ 
+    username: str = Field(examples=["admin2"])
+    password: str = Field(min_length=8, examples=["PasswordKuat123"])
+ 
+    @field_validator("password")
+    @classmethod
+    def batasi_72_byte(cls, nilai: str) -> str:
+        if len(nilai.encode("utf-8")) > 72:
+            raise ValueError("Password maksimal 72 byte")
+        return nilai
+ 
+ 
+@router.get("/admin/user", dependencies=[Depends(admin_saat_ini)])
+def lihat_user():
+    """Daftar akun admin (tanpa hash password)."""
+    return call_read("admin", "sp_lihat_user")
+ 
+ 
+@router.post(
+    "/admin/user",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(admin_saat_ini)],
+)
+def tambah_user(data: UserBaru):
+    call_write("admin", "sp_tambah_user", [data.username, hash_password(data.password)])
+    return {"pesan": "User berhasil ditambahkan"}
+ 
+ 
+@router.delete("/admin/user/{id_user}")
+def hapus_user(id_user: int, admin: dict = Depends(admin_saat_ini)):
+    # Admin tidak boleh menghapus akun yang sedang dipakainya sendiri.
+    if id_user == admin["id_user"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tidak bisa menghapus akun yang sedang digunakan",
+        )
+    call_write("admin", "sp_hapus_user", [id_user])
+    return {"pesan": "User berhasil dihapus"}
