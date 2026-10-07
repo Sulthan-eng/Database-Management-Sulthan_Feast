@@ -4,7 +4,6 @@ API reservasi rumah makan "Sulthan Feast" berbasis **FastAPI + MySQL**.
 Seluruh akses database dilakukan lewat `CALL procedure` (stored procedure),
 tidak ada query `SELECT/INSERT/UPDATE/DELETE` langsung dari kode Python.
 
-> Catatan: file SQL (skema tabel, procedure, trigger, user MySQL) belum termasuk di repo ini.
 
 ## Fitur
 
@@ -159,22 +158,6 @@ Aturan khusus yang sudah diimplementasi di API:
 - Endpoint admin tanpa token menjawab `401 "Token tidak valid atau sudah kedaluwarsa"`.
 - Error `SIGNAL SQLSTATE '45000'` dari procedure diteruskan sebagai `400` apa adanya.
 - Error FK `1452` (mis. `id_kategori_menu` / `id_ruangan` tidak ada) menjadi `400`.
-
-## Stored Procedure yang Dibutuhkan
-
-Database SQL belum ada di repo. Minimal procedure yang harus dibuat agar API berjalan:
-
-```text
-sp_lihat_menu_customer, sp_cari_menu, sp_lihat_kategori_menu, sp_lihat_ruangan,
-sp_buat_reservasi, sp_verifikasi_login, sp_lihat_menu_admin,
-sp_tambah_kategori_menu, sp_ubah_kategori_menu, sp_hapus_kategori_menu,
-sp_tambah_menu, sp_ubah_menu, sp_hapus_menu,
-sp_tambah_ruangan, sp_ubah_ruangan, sp_hapus_ruangan,
-sp_lihat_reservasi, sp_ubah_status_reservasi, sp_lihat_log_status_reservasi,
-sp_ubah_nama_customer, sp_lihat_user, sp_tambah_user, sp_hapus_user
-```
-
-Plus trigger yang disinggung di kode: log otomatis tiap perubahan status reservasi, dan hapus ruangan ikut menghapus reservasi di dalamnya (log tetap tersimpan).
 
 ## Pengembangan Selanjutnya
 
