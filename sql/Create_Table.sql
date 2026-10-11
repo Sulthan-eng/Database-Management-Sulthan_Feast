@@ -17,7 +17,15 @@ CREATE TABLE menu (
 	FOREIGN KEY(id_kategori) REFERENCES kategori_menu(id_kategori)
 );
 
-ALTER TABLE menu RENAME COLUMN harga_bersih TO harga_jual 
+ALTER TABLE menu RENAME COLUMN harga_bersih TO harga_jual; 
+
+-- nambah constraint harga_pokok_penjualan < harga_jual
+ALTER TABLE menu ADD CONSTRAINT chk_menu_harga
+CHECK (harga_pokok_penjualan >= 0 AND harga_jual > harga_pokok_penjualan);
+
+ALTER TABLE menu
+MODIFY harga_pokok_penjualan DECIMAL(12,2) NOT NULL,
+MODIFY harga_jual DECIMAL(12,2) NOT NULL;
 
 
 
@@ -26,6 +34,8 @@ CREATE TABLE ruangan (
 	ruangan VARCHAR(100) NOT NULL,
 	deskripsi VARCHAR(255)
 );
+
+ALTER TABLE ruangan ADD COLUMN status_ruangan ENUM('Tersedia', 'Sedang Dipakai', 'Pemeliharaan', 'Nonaktif') NOT NULL DEFAULT 'Tersedia';
 
 
 CREATE TABLE user_sistem (
@@ -37,11 +47,13 @@ CREATE TABLE user_sistem (
 -- hapus role
 ALTER TABLE user_sistem DROP COLUMN role;
 
+
 CREATE TABLE customer (
 	id_customer INT PRIMARY KEY AUTO_INCREMENT,
 	nama VARCHAR(100) NOT NULL,
 	no_WA VARCHAR(20) NOT NULL UNIQUE
 );
+ALTER TABLE customer ADD CONSTRAINT chk_customer_no_wa CHECK (no_WA REGEXP '^08[0-9]{8,11}$');
 
 
 CREATE TABLE reservasi (
@@ -57,7 +69,20 @@ CREATE TABLE reservasi (
 	FOREIGN KEY(id_customer) REFERENCES customer(id_customer)
 );
 ALTER TABLE reservasi ADD COLUMN nama_pemesan VARCHAR(100) NOT NULL AFTER id_reservasi;
-ALTER TABLE reservasi MODIFY status_reservasi ENUM('pending', 'confirmed', 'cancelled') NOT NULL DEFAULT 'pending';
+
+ALTER TABLE reservasi MODIFY status_reservasi ENUM('pending', 'confirmed', 'cancelled', 'berlangsung', 'selesai') NOT NULL DEFAULT 'pending';
+
+ALTER TABLE reservasi CHANGE COLUMN tanggal waktu_reservasi DATETIME NOT NULL;
+
+ALTER TABLE reservasi DROP COLUMN jam;
+
+ALTER TABLE reservasi RENAME COLUMN deskripsi to catatan;
+
+ALTER TABLE reservasi ADD CONSTRAINT chk_reservasi_jumlah_orang CHECK (jumlah_orang > 0);
+
+ALTER TABLE reservasi ADD COLUMN waktu_selesai DATETIME NULL AFTER waktu_reservasi;
+ALTER TABLE reservasi MODIFY COLUMN waktu_selesai DATETIME NOT NULL;
+ALTER TABLE reservasi ADD CONSTRAINT chk_reservasi_durasi CHECK (waktu_selesai > waktu_reservasi);
 
 
 
@@ -68,5 +93,9 @@ CREATE TABLE log_status_reservasi (
     status_baru ENUM('pending', 'confirmed', 'cancelled') NOT NULL,
     waktu TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE log_status_reservasi DROP COLUMN status_lama;
+ALTER TABLE log_status_reservasi RENAME COLUMN status_baru TO status_reservasi;
+ALTER TABLE log_status_reservasi MODIFY COLUMN status_reservasi
+  ENUM('pending','confirmed','cancelled','berlangsung','selesai') NOT NULL;
 
 

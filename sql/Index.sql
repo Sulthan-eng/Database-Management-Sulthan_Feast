@@ -8,9 +8,10 @@ EXPLAIN SELECT * FROM menu WHERE nama LIKE '%b%';
 SHOW INDEX FROM menu;  
 
 
-CREATE INDEX idx_reservasi_ruangan_waktu ON reservasi(id_ruangan, tanggal, jam);
+CREATE INDEX idx_reservasi_ruangan_waktu ON reservasi(id_ruangan, waktu_reservasi);
 
 SHOW INDEX FROM reservasi;
                      
+CREATE INDEX idx_log_reservasi ON log_status_reservasi(id_reservasi, id_log);
 
-SELECT CURRENT_USER();
+SHOW INDEX FROM log_status_reservasi;
