@@ -57,7 +57,6 @@ BEGIN
 END //
 DELIMITER ;
 
-DROP PROCEDURE sp_ubah_kategori_menu
 
 CALL sp_ubah_kategori_menu(1, 'Appetizer')
 
@@ -289,55 +288,37 @@ DELIMITER ;
 CALL sp_lihat_ruangan();
 
 
-
+-- antara hapus atau ubah biar dia kembalikan kapan aja ruangan itu direservasi
 DELIMITER //
-CREATE PROCEDURE sp_lihat_ketersediaan_ruangan(
-    IN p_waktu DATETIME,
-    IN p_durasi_menit INT
+CREATE PROCEDURE sp_lihat_jadwal_ruangan(
+    IN p_id_ruangan INT
 )
 READS SQL DATA
 SQL SECURITY DEFINER
 BEGIN
-    DECLARE v_selesai DATETIME;
-
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
         RESIGNAL;
     END;
 
-    IF p_waktu IS NULL OR p_waktu <= NOW() THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Waktu reservasi harus di masa depan';
-    END IF;
-
-    IF p_durasi_menit IS NULL OR p_durasi_menit NOT BETWEEN 30 AND 480 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Durasi reservasi harus antara 30 dan 480 menit';
-    END IF;
-
-    SET v_selesai = fn_hitung_waktu_selesai(p_waktu, p_durasi_menit);
-
     START TRANSACTION READ ONLY;
-        SELECT id_ruangan,
-               ruangan,
-               deskripsi,
-               CASE
-                   WHEN status_ruangan = 'Pemeliharaan' THEN 'Pemeliharaan'
-                   WHEN NOT fn_cek_ketersediaan_ruangan(id_ruangan, p_waktu, v_selesai) THEN 'Direservasi'
-                   ELSE 'Tersedia'
-               END AS status_pada_waktu
-        FROM v_lihat_ruangan
-        WHERE status_ruangan <> 'Nonaktif'
-        ORDER BY ruangan;
+
+    IF p_id_ruangan IS NULL THEN
+        SELECT * FROM v_lihat_jadwal_ruangan
+        ORDER BY nama_ruangan, waktu_reservasi;
+    ELSE
+        SELECT * FROM v_lihat_jadwal_ruangan
+        WHERE id_ruangan = p_id_ruangan
+        ORDER BY waktu_reservasi;
+    END IF;
+
     COMMIT;
 END //
 DELIMITER ;
-
-CALL sp_lihat_ketersediaan_ruangan('2026-12-20 19:30:00', 60);   -- ruangan 4: Direservasi
-CALL sp_lihat_ketersediaan_ruangan('2026-12-20 21:00:00', 60);   -- ruangan 4: Tersedia (menyambung tepat)
-CALL sp_lihat_ketersediaan_ruangan('2020-01-01 19:00:00', 60);   -- ditolak: masa lalu
-CALL sp_lihat_ketersediaan_ruangan('2026-12-20 19:00:00', 10);   -- ditolak: durasi < 30
+CALL sp_lihat_jadwal_ruangan(NULL);
+CALL sp_lihat_jadwal_ruangan(4);
+CALL sp_lihat_jadwal_ruangan(9999);   
 
 
 DELIMITER //
@@ -486,7 +467,7 @@ CREATE PROCEDURE sp_buat_reservasi(
     IN p_nama VARCHAR(100),
     IN p_no_wa VARCHAR(20),
     IN p_waktu_reservasi DATETIME,
-    IN p_durasi_menit INT,
+    IN p_waktu_selesai DATETIME,
     IN p_jumlah_orang INT,
     IN p_id_ruangan INT,
     IN p_catatan JSON
@@ -495,7 +476,6 @@ SQL SECURITY DEFINER
 BEGIN
     DECLARE v_status_ruangan VARCHAR(20) DEFAULT NULL;
     DECLARE v_id_customer INT;
-    DECLARE v_waktu_selesai DATETIME;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -508,12 +488,10 @@ BEGIN
             SET MESSAGE_TEXT = 'Waktu reservasi harus di masa depan';
     END IF;
 
-	IF p_durasi_menit IS NULL OR p_durasi_menit NOT BETWEEN 30 AND 480 THEN
+	IF p_waktu_selesai IS NULL OR p_waktu_selesai <= p_waktu_reservasi THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Durasi reservasi harus antara 30 dan 480 menit';
+            SET MESSAGE_TEXT = 'Waktu selesai harus setelah waktu mulai';
     END IF;
-	
-	SET v_waktu_selesai = fn_hitung_waktu_selesai(p_waktu_reservasi, p_durasi_menit);
 
     START TRANSACTION;
 
@@ -535,7 +513,7 @@ BEGIN
     		SET MESSAGE_TEXT = 'Ruangan tidak dapat dipesan';
     END IF;
     
-    IF NOT fn_cek_ketersediaan_ruangan(p_id_ruangan, p_waktu_reservasi, v_waktu_selesai) THEN
+    IF NOT fn_cek_ketersediaan_ruangan(p_id_ruangan, p_waktu_reservasi, p_waktu_selesai) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Ruangan sudah direservasi pada waktu tersebut';
     END IF;
@@ -552,51 +530,20 @@ BEGIN
     
     INSERT INTO reservasi (nama_pemesan, waktu_reservasi, waktu_selesai, jumlah_orang, 
     		catatan, id_ruangan, id_customer)
-    VALUES (NULLIF(TRIM(p_nama), ''), p_waktu_reservasi, v_waktu_selesai, p_jumlah_orang,
+    VALUES (NULLIF(TRIM(p_nama), ''), p_waktu_reservasi, p_waktu_selesai, p_jumlah_orang,
             p_catatan, p_id_ruangan, v_id_customer);
     COMMIT;
 END //
 DELIMITER ;
 
-CALL sp_buat_reservasi('Fandi Ahmad', '081234567890', '2026-12-20 19:00:00', 120, 4, 9,
-    '{"dekorasi": "kasi tirai warna navy"}');
 
-CALL sp_buat_reservasi('Lily', '082354567890', '2026-10-12 19:30:00', 120, 2, 4, NULL);
-CALL sp_buat_reservasi('Budi', '083322222222', '2026-12-20 20:30:00', 120, 2, 9, NULL);
+-- sukses
+CALL sp_buat_reservasi('Tester', '081200000002', '2026-12-30 19:00:00', '2026-12-30 21:00:00', 2, 4, '{"alergi": "benang sari"}');
+-- ditolak: selesai sebelum mulai
+CALL sp_buat_reservasi('Tester', '081200000002', '2026-12-30 19:00:00', '2026-12-30 18:00:00', 2, 4, NULL);
+-- ditolak: bentrok dengan reservasi tadi
+CALL sp_buat_reservasi('Tester', '081200000002', '2026-12-30 20:00:00', '2026-12-30 22:00:00', 2, 4, NULL);
 
-
-
-DELIMITER //
-CREATE PROCEDURE sp_ubah_nama_customer(
-    IN p_id_customer INT,
-    IN p_nama VARCHAR(100)
-)
-SQL SECURITY DEFINER
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
-
-    START TRANSACTION;
-
-    UPDATE customer
-    SET nama = NULLIF(TRIM(p_nama), '')
-    WHERE id_customer = p_id_customer;
-
-    IF ROW_COUNT() = 0 THEN
-        -- bisa berarti: baris tidak ada ATAU nilainya memang sama
-        IF NOT EXISTS (SELECT 1 FROM customer WHERE id_customer = p_id_customer) THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Customer tidak ditemukan';
-        END IF;
-    END IF;
-
-    COMMIT;
-END //
-DELIMITER ;
-CALL sp_ubah_nama_customer(7, 'Budi Hartono')
 
 
 DELIMITER //
@@ -618,7 +565,7 @@ DELIMITER ;
 CALL sp_lihat_reservasi();
 
 
-
+DELIMITER //
 CREATE PROCEDURE sp_lihat_reservasi_aktif()
 SQL SECURITY DEFINER
 READS SQL DATA
@@ -636,6 +583,7 @@ DELIMITER ;
 
 
 CALL sp_lihat_reservasi_aktif();
+
 
 
 DELIMITER //
@@ -746,7 +694,6 @@ BEGIN
 END //
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_cari_menu
 
 CALL sp_cari_menu('k');
 CALL sp_cari_menu('   ');     -- error
@@ -774,7 +721,6 @@ BEGIN
     COMMIT;
 END //
 DELIMITER ;
-DROP PROCEDURE IF EXISTS sp_verifikasi_login;
 
 CALL sp_verifikasi_login('admint');     -- 1 baris: id_user, username, password_hash
 CALL sp_verifikasi_login('tidakada');   -- kosong (bukan error, memang disengaja)
@@ -905,7 +851,6 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL sp_ubah_status_reservasi(7, 'confirmed');  -- ganti id sesuai data kamu, memicu trigger
 CALL sp_lihat_log_status_reservasi(1);          -- riwayat reservasi 1
 CALL sp_lihat_log_status_reservasi(NULL);       -- semua log
 CALL sp_lihat_log_status_reservasi(9999);       -- kosong, bukan error
