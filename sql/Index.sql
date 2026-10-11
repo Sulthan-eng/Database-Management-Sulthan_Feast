@@ -12,6 +12,7 @@ CREATE INDEX idx_reservasi_ruangan_waktu ON reservasi(id_ruangan, waktu_reservas
 
 SHOW INDEX FROM reservasi;
                      
-CREATE INDEX idx_log_reservasi ON log_status_reservasi(id_reservasi, id_log);
+
+CREATE INDEX idx_log_reservasi ON log_status_reservasi(id_reservasi);
 
 SHOW INDEX FROM log_status_reservasi;
