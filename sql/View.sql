@@ -73,11 +73,19 @@ SELECT id_user, username, password AS password_hash
 FROM user_sistem;
 
 
+CREATE VIEW v_lihat_jadwal_ruangan AS
+SELECT ru.id_ruangan,
+       ru.ruangan AS nama_ruangan,
+       re.waktu_reservasi,
+       re.waktu_selesai
+FROM reservasi re
+JOIN ruangan ru ON ru.id_ruangan = re.id_ruangan
+WHERE re.status_reservasi <> 'cancelled'
+  AND re.waktu_selesai > NOW();
+
+
+
 CREATE VIEW v_lihat_log_status_reservasi AS
-SELECT l.id_log,
-       l.id_reservasi,
-       r.nama_pemesan,
-       l.status_reservasi,
-       l.waktu
-FROM log_status_reservasi l
-LEFT JOIN reservasi r ON r.id_reservasi = l.id_reservasi;
+SELECT id_log, id_reservasi, nama_pemesan, status_reservasi, waktu
+FROM log_status_reservasi;
+

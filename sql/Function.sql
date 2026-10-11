@@ -40,22 +40,5 @@ DELIMITER ;
 SELECT fn_hitung_margin_menu(25000, 35000); 
 
 
-DELIMITER //
-CREATE FUNCTION fn_hitung_waktu_selesai(
-    p_waktu_mulai DATETIME,
-    p_durasi_menit INT
-)
-RETURNS DATETIME
-DETERMINISTIC
-NO SQL
-BEGIN
-    RETURN p_waktu_mulai + INTERVAL p_durasi_menit MINUTE;
-END //
-DELIMITER ;
-
-SELECT fn_hitung_waktu_selesai('2026-12-20 23:00:00', 180); -- 2026-12-21 02:00:00
-
-
 SHOW FUNCTION STATUS WHERE Db = 'sulthan_feast';
-
 

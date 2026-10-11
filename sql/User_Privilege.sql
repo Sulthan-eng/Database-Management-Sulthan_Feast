@@ -9,7 +9,7 @@ GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_cari_menu           TO 'app_customer
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_lihat_kategori_menu TO 'app_customer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_lihat_ruangan       TO 'app_customer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_buat_reservasi      TO 'app_customer'@'localhost';
-GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_lihat_ketersediaan_ruangan TO 'app_customer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_lihat_jadwal_ruangan TO 'app_customer'@'localhost';
 
 
 -- 3. Hak app_admin: semua procedure
@@ -29,7 +29,6 @@ GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_hapus_ruangan       TO 'app_admin'@'
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_lihat_reservasi     TO 'app_admin'@'localhost';
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_lihat_reservasi_aktif  TO 'app_admin'@'localhost';
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_ubah_status_reservasi TO 'app_admin'@'localhost';
-GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_ubah_nama_customer  TO 'app_admin'@'localhost';
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_lihat_log_status_reservasi TO 'app_admin'@'localhost';
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_verifikasi_login    TO 'app_admin'@'localhost';
 GRANT EXECUTE ON PROCEDURE sulthan_feast.sp_tambah_user         TO 'app_admin'@'localhost';

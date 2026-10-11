@@ -642,7 +642,6 @@ BEGIN
             SET MESSAGE_TEXT = 'Ruangan sedang tidak tersedia. Selesaikan reservasi sebelumnya atau periksa status ruangan';
     END IF;
     
-    --     trg tbel log
     UPDATE reservasi
     SET status_reservasi = p_status
     WHERE id_reservasi = p_id_reservasi;
