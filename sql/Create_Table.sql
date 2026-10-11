@@ -43,8 +43,8 @@ CREATE TABLE customer (
 CREATE TABLE reservasi (
     id_reservasi INT PRIMARY KEY AUTO_INCREMENT,
     nama_pemesan VARCHAR(100) NOT NULL,
-    waktu_reservasi DATETIME NOT NULL,   -- jam mulai
-    waktu_selesai DATETIME NOT NULL,   -- jadwal selesai, bukan realisasi
+    waktu_reservasi DATETIME NOT NULL,   
+    waktu_selesai DATETIME NOT NULL,   
     jumlah_orang INT NOT NULL,
     status_reservasi ENUM('pending', 'confirmed', 'berlangsung', 'selesai', 'cancelled') NOT NULL DEFAULT 'pending',
     catatan JSON,
