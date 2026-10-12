@@ -120,7 +120,7 @@ BEGIN
     END;
 	
     START TRANSACTION READ ONLY;
-        SELECT * FROM v_lihat_kategori_menu
+        SELECT * FROM v_lihat_kategori_menu;
     COMMIT;
 END // 
 DELIMITER ;
@@ -163,7 +163,7 @@ CREATE PROCEDURE sp_ubah_ruangan(
 )
 SQL SECURITY DEFINER
 BEGIN
-    DECLARE v_status_lama VARCHAR(20) DEFAULT NULL;
+    DECLARE v_status_lama VARCHAR(20);
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -171,8 +171,7 @@ BEGIN
         RESIGNAL;
     END;
 
-    IF p_status_ruangan IS NULL
-       OR p_status_ruangan NOT IN ('Tersedia','Sedang Dipakai','Pemeliharaan','Nonaktif') THEN
+    IF p_status_ruangan IS NULL OR p_status_ruangan NOT IN ('Tersedia','Sedang Dipakai','Pemeliharaan','Nonaktif') THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Status ruangan tidak valid';
     END IF;
@@ -220,7 +219,7 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL sp_ubah_ruangan(6, 'Chill Room', 'Ruangan untuk menghabiskan waktu bersama orang orang spesial.', 'Pemeliharaan')
+CALL sp_ubah_ruangan(5, 'VVIP Room', 'Ruangan lebih luas dari VIP Room untuk menghabiskan waktu bersama keluarga.', 'Pemeliharaan')
 
 
 
@@ -230,7 +229,7 @@ CREATE PROCEDURE sp_hapus_ruangan(
 )
 SQL SECURITY DEFINER
 BEGIN
-    DECLARE v_id INT DEFAULT NULL;
+    DECLARE v_id INT;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -288,7 +287,7 @@ DELIMITER ;
 CALL sp_lihat_ruangan();
 
 
--- antara hapus atau ubah biar dia kembalikan kapan aja ruangan itu direservasi
+
 DELIMITER //
 CREATE PROCEDURE sp_lihat_jadwal_ruangan(
     IN p_id_ruangan INT
@@ -474,7 +473,7 @@ CREATE PROCEDURE sp_buat_reservasi(
 )
 SQL SECURITY DEFINER
 BEGIN
-    DECLARE v_status_ruangan VARCHAR(20) DEFAULT NULL;
+    DECLARE v_status_ruangan VARCHAR(20);
     DECLARE v_id_customer INT;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -495,7 +494,7 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Kunci baris ruangan supaya dua request untuk ruangan yang sama
+    -- kunci baris ruangan supaya 2 request utk ruangan yg sama
     -- diproses bergantian, bukan bersamaan
     SELECT status_ruangan INTO v_status_ruangan
     FROM ruangan
@@ -507,7 +506,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Ruangan tidak ditemukan';
     END IF;
 
-    -- Cek ketersediaan setelah lock didapat
+   
     IF v_status_ruangan IN ('Pemeliharaan', 'Nonaktif') THEN
     	SIGNAL SQLSTATE '45000'
     		SET MESSAGE_TEXT = 'Ruangan tidak dapat dipesan';
@@ -593,9 +592,9 @@ CREATE PROCEDURE sp_ubah_status_reservasi(
 )
 SQL SECURITY DEFINER
 BEGIN
-    DECLARE v_id_ruangan INT DEFAULT NULL;
-    DECLARE v_status_ruangan VARCHAR(20) DEFAULT NULL;
-    DECLARE v_status_lama VARCHAR(20) DEFAULT NULL;
+    DECLARE v_id_ruangan INT;
+    DECLARE v_status_ruangan VARCHAR(20);
+    DECLARE v_status_lama VARCHAR(20);
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -670,7 +669,7 @@ CREATE PROCEDURE sp_cari_menu(
 SQL SECURITY DEFINER
 READS SQL DATA
 BEGIN
-	DECLARE v_keyword VARCHAR(100) DEFAULT NULL;
+	DECLARE v_keyword VARCHAR(100);
 
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -721,7 +720,7 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL sp_verifikasi_login('admint');     -- 1 baris: id_user, username, password_hash
+CALL sp_verifikasi_login('admin2');     -- 1 baris: id_user, username, password_hash
 CALL sp_verifikasi_login('tidakada');   -- kosong (bukan error, memang disengaja)
 CALL sp_verifikasi_login('ADMIN1');     -- tetap 1 baris, karena collation _ci
 
@@ -733,7 +732,7 @@ CREATE PROCEDURE sp_tambah_user(
 )
 SQL SECURITY DEFINER
 BEGIN
-    -- Username kembar (UNIQUE) diubah jadi pesan yang jelas, bebas race condition
+    -- Username kembar (UNIQUE) diubah jadi pesan, bebas race condition
     DECLARE EXIT HANDLER FOR 1062
     BEGIN
         ROLLBACK;

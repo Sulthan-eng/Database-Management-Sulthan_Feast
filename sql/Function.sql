@@ -18,7 +18,7 @@ BEGIN
           AND waktu_reservasi < p_selesai
           AND waktu_selesai > p_mulai
     );
-END 
+END //
 DELIMITER ;
 
 SELECT fn_cek_ketersediaan_ruangan(1, '2026-12-25 19:00:00', '2026-12-25 21:00:00'); -- TRUE kalau belum ada yang booking slot

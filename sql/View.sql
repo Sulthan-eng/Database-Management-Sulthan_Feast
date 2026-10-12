@@ -5,6 +5,7 @@ FROM menu m
 JOIN kategori_menu km ON m.id_kategori = km.id_kategori;
 
 
+
 CREATE VIEW v_menu_admin AS	
 SELECT m.id_menu, m.nama, m.deskripsi, m.harga_pokok_penjualan, m.harga_jual, fn_hitung_margin_menu(m.harga_pokok_penjualan, m.harga_jual) AS margin_persen, m.id_kategori, 
 		km.kategori AS nama_kategori
@@ -74,10 +75,7 @@ FROM user_sistem;
 
 
 CREATE VIEW v_lihat_jadwal_ruangan AS
-SELECT ru.id_ruangan,
-       ru.ruangan AS nama_ruangan,
-       re.waktu_reservasi,
-       re.waktu_selesai
+SELECT ru.id_ruangan, ru.ruangan AS nama_ruangan, re.waktu_reservasi, re.waktu_selesai
 FROM reservasi re
 JOIN ruangan ru ON ru.id_ruangan = re.id_ruangan
 WHERE re.status_reservasi <> 'cancelled'
