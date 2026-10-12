@@ -1,22 +1,40 @@
 DELIMITER //
-CREATE TRIGGER trg_hapus_reservasi_sebelum_ruangan_dihapus
-BEFORE DELETE ON ruangan
+CREATE TRIGGER trg_log_reservasi_dibuat
+AFTER INSERT ON reservasi
 FOR EACH ROW
 BEGIN
-	DELETE FROM reservasi
-	WHERE id_ruangan = OLD.id_ruangan;
-END
-DELIMITER ;
+    INSERT INTO log_status_reservasi (id_reservasi, nama_pemesan, status_reservasi)
+    VALUES (NEW.id_reservasi, NEW.nama_pemesan, NEW.status_reservasi);
+END //
 
-
-DELIMITER //
 CREATE TRIGGER trg_log_status_reservasi
 AFTER UPDATE ON reservasi
 FOR EACH ROW
 BEGIN
     IF OLD.status_reservasi <> NEW.status_reservasi THEN
-        INSERT INTO log_status_reservasi(id_reservasi, status_lama, status_baru)
-        VALUES (NEW.id_reservasi, OLD.status_reservasi, NEW.status_reservasi);
+        INSERT INTO log_status_reservasi (id_reservasi, nama_pemesan, status_reservasi)
+        VALUES (NEW.id_reservasi, NEW.nama_pemesan, NEW.status_reservasi);
     END IF;
-END
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE TRIGGER trg_sinkron_status_ruangan
+AFTER UPDATE ON reservasi
+FOR EACH ROW
+BEGIN
+    IF OLD.status_reservasi <> NEW.status_reservasi THEN
+        IF NEW.status_reservasi = 'berlangsung' THEN
+            UPDATE ruangan
+            SET status_ruangan = 'Sedang Dipakai'
+            WHERE id_ruangan = NEW.id_ruangan;
+        ELSEIF OLD.status_reservasi = 'berlangsung' THEN
+            UPDATE ruangan
+            SET status_ruangan = 'Tersedia'
+            WHERE id_ruangan = NEW.id_ruangan
+              AND status_ruangan = 'Sedang Dipakai';
+        END IF;
+    END IF;
+END //
 DELIMITER ;
