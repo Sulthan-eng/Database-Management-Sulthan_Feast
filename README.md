@@ -192,7 +192,3 @@ selama aplikasi dan server database berada di zona yang sama; jika server
 berbeda zona, selaraskan dulu (`SELECT @@time_zone`) sebelum menguji
 aturan "waktu reservasi harus di masa depan".
 
-## Pengembangan Selanjutnya
-
-- [ ] Tes otomatis untuk endpoint publik/admin.
-- [ ] Komentar baris `CALL` tes di file-file `sql/`.
